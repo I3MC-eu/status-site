@@ -45,7 +45,7 @@
     .status.free { color: #2ecc71; }
     .status.busy { color: #f1c40f; }
     .status.asleep { color: #3498db; }
-    .status["do not disturb"] { color: #e74c3c; }
+    .status.do-not-disturb { color: #e74c3c; }
     .status.working { color: #9b59b6; }
     .status.error { color: #e67e22; }
 
@@ -68,6 +68,7 @@
     <span id="status" class="status">⏳ Loading...</span>
   </h1>
   <p id="title"></p>
+  <p id="until"></p>
   <div class="updated" id="updated">Connecting...</div>
 
   <script>
@@ -98,6 +99,13 @@
         statusEl.className = getClassName(data.status || "");
 
         document.getElementById("title").textContent = data.title || "";
+
+        if (data.until) {
+          document.getElementById("until").textContent = "Until: " + data.until;
+        } else {
+          document.getElementById("until").textContent = "";
+        }
+
         document.getElementById("updated").textContent = "Last updated: " + new Date().toLocaleTimeString();
       } catch (e) {
         const statusEl = document.getElementById("status");
@@ -105,6 +113,7 @@
         statusEl.className = "status error";
 
         document.getElementById("title").textContent = "Could not fetch status.";
+        document.getElementById("until").textContent = "";
         document.getElementById("updated").textContent = "";
       }
     }

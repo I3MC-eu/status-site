@@ -34,6 +34,11 @@
     .danger {
       background: #d9534f;
     }
+    .until-note {
+      margin-top: 1rem;
+      color: #555;
+      font-size: 0.95rem;
+    }
   </style>
 </head>
 <body>
@@ -57,6 +62,8 @@
     <label for="duration">Clear after (minutes, optional):</label>
     <input type="number" name="duration" id="duration" min="1" placeholder="e.g. 30" />
 
+    <div class="until-note" id="untilPreview"></div>
+
     <button type="submit">Apply Manual Status</button>
   </form>
 
@@ -65,11 +72,31 @@
   </form>
 
   <script>
+    const durationInput = document.getElementById("duration");
+    const untilPreview = document.getElementById("untilPreview");
+
+    durationInput.addEventListener("input", () => {
+      const minutes = parseInt(durationInput.value, 10);
+      if (!isNaN(minutes) && minutes > 0) {
+        const until = new Date(Date.now() + minutes * 60000);
+        untilPreview.textContent = "This status will auto-clear at: " + until.toLocaleTimeString();
+      } else {
+        untilPreview.textContent = "";
+      }
+    });
+
     document.getElementById("statusForm").addEventListener("submit", async (e) => {
       e.preventDefault();
       const status = document.getElementById("status").value;
       const description = document.getElementById("description").value;
       const duration = document.getElementById("duration").value;
+
+      if (status === "Free") {
+        // Clear override directly
+        const res = await fetch("/admin/clear-status", { method: "POST" });
+        alert(res.ok ? "✅ Manual override cleared!" : "❌ Failed to clear override.");
+        return;
+      }
 
       const payload = {
         status,

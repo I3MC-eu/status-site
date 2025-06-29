@@ -48,7 +48,7 @@ function getStatus(auth, callback) {
   }, (err, res) => {
     if (err) {
       console.error("❌ API error:", err);
-      return callback({ status: "Error", title: "API failed" });
+      return callback({ status: "Error", title: "API failed", until: null });
     }
 
     const events = res.data.items || [];
@@ -58,23 +58,33 @@ function getStatus(auth, callback) {
       return now >= start && now < end;
     });
 
-    if (!event) return callback({ status: "Free", title: "" });
+    if (!event) return callback({ status: "Free", title: "", until: null });
 
     const summary = (event.summary || "").toLowerCase();
+    const end = DateTime.fromISO(event.end.dateTime || event.end.date).setZone("Europe/Vienna");
+    const until = end.toRelative({ base: now, unit: ["minutes", "hours"] });
 
     if (summary.includes("imp")) {
-      return callback({ status: "Do Not Disturb", title: summary.includes("private") ? "" : event.summary });
+      return callback({
+        status: "Do Not Disturb",
+        title: summary.includes("private") ? "" : event.summary,
+        until: `ends ${until}`
+      });
     }
 
     if (summary.includes("sleep")) {
-      return callback({ status: "Asleep", title: summary.includes("private") ? "" : event.summary });
+      return callback({
+        status: "Asleep",
+        title: summary.includes("private") ? "" : event.summary,
+        until: `ends ${until}`
+      });
     }
 
     if (summary.includes("private")) {
-      return callback({ status: "Busy", title: "" });
+      return callback({ status: "Busy", title: "", until: `ends ${until}` });
     }
 
-    return callback({ status: "Busy", title: event.summary });
+    return callback({ status: "Busy", title: event.summary, until: `ends ${until}` });
   });
 }
 
