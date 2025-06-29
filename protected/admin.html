@@ -4,14 +4,36 @@
   <meta charset="UTF-8" />
   <title>Admin Panel</title>
   <style>
-    body { font-family: sans-serif; max-width: 600px; margin: 3rem auto; background: #f9f9f9; color: #222; }
-    label { display: block; margin-top: 1rem; }
-    input, select, textarea, button {
-      margin-top: 0.5rem; width: 100%; padding: 0.6rem; font-size: 1rem;
+    body {
+      font-family: sans-serif;
+      max-width: 600px;
+      margin: 3rem auto;
+      background: #f9f9f9;
+      color: #222;
     }
-    button { margin-top: 1.5rem; background: #0078d4; color: white; border: none; cursor: pointer; }
-    button:hover { background: #005ea0; }
-    .danger { background: #d9534f; }
+    label {
+      display: block;
+      margin-top: 1rem;
+    }
+    input, select, textarea, button {
+      margin-top: 0.5rem;
+      width: 100%;
+      padding: 0.6rem;
+      font-size: 1rem;
+    }
+    button {
+      margin-top: 1.5rem;
+      background: #0078d4;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #005ea0;
+    }
+    .danger {
+      background: #d9534f;
+    }
   </style>
 </head>
 <body>
@@ -26,6 +48,7 @@
       <option value="Busy">🟡 Busy</option>
       <option value="Do Not Disturb">🚫 Do Not Disturb</option>
       <option value="Error">❌ Error</option>
+      <option value="Free">🟢 Free (Disable Manual Override)</option>
     </select>
 
     <label for="description">Custom Title (optional):</label>

@@ -1,5 +1,6 @@
 const express = require("express");
 const path = require("path");
+const fs = require("fs");
 const basicAuth = require("express-basic-auth");
 const { authorize, getStatus } = require("./calendar");
 
@@ -7,69 +8,79 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 let current = { status: "Loading...", title: "" };
-let override = null;
+let manualOverride = null;
+let clearTimer = null;
 
-// Middleware
+// Use JSON body parser
 app.use(express.json());
+
+// Serve static site files
 app.use(express.static(path.join(__dirname, "public")));
 
-// Protect /admin route
-app.get("/admin", basicAuth({
-  users: { "admin": "LgLm" }, // 👈 change to a strong password
-  challenge: true
-}), (req, res) => {
+// Set up admin password from environment variable
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "changeme";
+
+// ✅ Admin basic authentication
+app.use("/admin", basicAuth({
+  users: { "admin": ADMIN_PASSWORD },
+  challenge: true,
+  unauthorizedResponse: "Unauthorized"
+}));
+
+// ✅ Serve protected admin panel HTML
+app.get("/admin", (req, res) => {
   res.sendFile(path.join(__dirname, "protected", "admin.html"));
 });
 
-// Handle manual status set
+// ✅ Manual override set
 app.post("/admin/set-status", (req, res) => {
   const { status, title, duration } = req.body;
-  if (!status) return res.status(400).send("Missing status");
+  manualOverride = {
+    status,
+    title: title || ""
+  };
 
-  override = { status, title: title || "", expires: null };
-
-  if (duration) {
-    const expiresAt = Date.now() + duration * 60000;
-    override.expires = expiresAt;
-    setTimeout(() => {
-      if (override && override.expires === expiresAt) {
-        override = null;
-        console.log("⏱️ Manual override cleared by timer");
-      }
-    }, duration * 60000);
+  if (clearTimer) clearTimeout(clearTimer);
+  if (duration && !isNaN(duration)) {
+    clearTimer = setTimeout(() => {
+      manualOverride = null;
+      console.log("🧹 Manual override expired.");
+    }, duration * 60 * 1000); // Convert minutes to ms
   }
 
-  console.log("📝 Manual override set:", override);
+  console.log("✅ Manual status set:", manualOverride);
   res.sendStatus(200);
 });
 
-// Handle override clear
+// ✅ Manual override clear
 app.post("/admin/clear-status", (req, res) => {
-  override = null;
-  console.log("🧹 Manual override cleared manually");
+  manualOverride = null;
+  if (clearTimer) clearTimeout(clearTimer);
+  console.log("🧹 Manual override cleared.");
   res.sendStatus(200);
 });
 
-// Status API
+// ✅ Status fetch route
 app.get("/status", (req, res) => {
-  res.json(override || current);
+  if (manualOverride && manualOverride.status.toLowerCase() !== "free") {
+    return res.json(manualOverride);
+  }
+  res.json(current);
 });
 
+// ✅ Calendar status updater
 function updateStatus() {
-  if (override && override.status.toLowerCase() !== "free") {
-    return;
-  }
-
   authorize(auth => {
     getStatus(auth, result => {
       current = result;
-      console.log("🔄 Updated status:", result);
+      console.log("🔄 Calendar status updated:", result);
     });
   });
 }
 
+// Start the app
 app.listen(PORT, () => {
   console.log(`✅ Server running on port ${PORT}`);
   updateStatus();
-  setInterval(updateStatus, 60 * 1000); // every 60s
+  setInterval(updateStatus, 60 * 1000); // update every minute
 });
