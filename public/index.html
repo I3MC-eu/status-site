@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Status</title>
+  <style>
+    :root {
+      --bg: #f5f7fa;
+      --text: #222;
+      --muted: #666;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #121212;
+        --text: #eee;
+        --muted: #888;
+      }
+    }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      text-align: center;
+      padding: 1rem;
+    }
+
+    h1 {
+      font-size: 3rem;
+      margin-bottom: 0.5em;
+    }
+
+    .status {
+      font-weight: bold;
+    }
+
+    .status.free { color: #2ecc71; }
+    .status.busy { color: #f1c40f; }
+    .status.asleep { color: #3498db; }
+    .status["do not disturb"] { color: #e74c3c; }
+    .status.working { color: #9b59b6; }
+    .status.error { color: #e67e22; }
+
+    p {
+      font-size: 1.3rem;
+      color: var(--muted);
+      margin: 0.5em 0;
+    }
+
+    .updated {
+      font-size: 0.9rem;
+      color: var(--muted);
+      margin-top: 1.5em;
+    }
+  </style>
+</head>
+<body>
+  <h1>
+    Status: 
+    <span id="status" class="status">⏳ Loading...</span>
+  </h1>
+  <p id="title"></p>
+  <div class="updated" id="updated">Connecting...</div>
+
+  <script>
+    function getEmoji(status) {
+      switch (status.toLowerCase()) {
+        case "free": return "🟢";
+        case "busy": return "🟡";
+        case "asleep": return "💤";
+        case "do not disturb": return "🚫";
+        case "working": return "💼";
+        case "error": return "❌";
+        default: return "⏳";
+      }
+    }
+
+    function getClassName(status) {
+      return "status " + status.toLowerCase().replace(/\s+/g, "-");
+    }
+
+    async function fetchStatus() {
+      try {
+        const res = await fetch("/status");
+        const data = await res.json();
+        const emoji = getEmoji(data.status || "loading");
+        const statusEl = document.getElementById("status");
+
+        statusEl.textContent = `${emoji} ${data.status}`;
+        statusEl.className = getClassName(data.status || "");
+
+        document.getElementById("title").textContent = data.title || "";
+        document.getElementById("updated").textContent = "Last updated: " + new Date().toLocaleTimeString();
+      } catch (e) {
+        const statusEl = document.getElementById("status");
+        statusEl.textContent = "❌ Error";
+        statusEl.className = "status error";
+
+        document.getElementById("title").textContent = "Could not fetch status.";
+        document.getElementById("updated").textContent = "";
+      }
+    }
+
+    fetchStatus();
+    setInterval(fetchStatus, 30000); // update every 30 seconds
+  </script>
+</body>
+</html>

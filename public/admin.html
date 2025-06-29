@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Admin Panel</title>
+  <style>
+    body { font-family: sans-serif; max-width: 600px; margin: 3rem auto; background: #f9f9f9; color: #222; }
+    label { display: block; margin-top: 1rem; }
+    input, select, textarea, button {
+      margin-top: 0.5rem; width: 100%; padding: 0.6rem; font-size: 1rem;
+    }
+    button { margin-top: 1.5rem; background: #0078d4; color: white; border: none; cursor: pointer; }
+    button:hover { background: #005ea0; }
+    .danger { background: #d9534f; }
+  </style>
+</head>
+<body>
+  <h1>Admin Status Override</h1>
+
+  <form id="statusForm">
+    <label for="status">Set Status:</label>
+    <select name="status" id="status" required>
+      <option value="">-- Select Status --</option>
+      <option value="Working">💼 Working</option>
+      <option value="Asleep">💤 Asleep</option>
+      <option value="Busy">🟡 Busy</option>
+      <option value="Do Not Disturb">🚫 Do Not Disturb</option>
+      <option value="Error">❌ Error</option>
+    </select>
+
+    <label for="description">Custom Title (optional):</label>
+    <input type="text" name="description" id="description" placeholder="e.g. Deep work session" />
+
+    <label for="duration">Clear after (minutes, optional):</label>
+    <input type="number" name="duration" id="duration" min="1" placeholder="e.g. 30" />
+
+    <button type="submit">Apply Manual Status</button>
+  </form>
+
+  <form id="clearForm" style="margin-top: 2rem;">
+    <button type="submit" class="danger">❎ Clear Manual Override</button>
+  </form>
+
+  <script>
+    document.getElementById("statusForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const status = document.getElementById("status").value;
+      const description = document.getElementById("description").value;
+      const duration = document.getElementById("duration").value;
+
+      const payload = {
+        status,
+        title: description || "",
+        duration: duration ? parseInt(duration, 10) : null
+      };
+
+      const res = await fetch("/admin/set-status", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+
+      alert(res.ok ? "✅ Manual status applied!" : "❌ Failed to apply status.");
+    });
+
+    document.getElementById("clearForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const res = await fetch("/admin/clear-status", {
+        method: "POST"
+      });
+
+      alert(res.ok ? "🧹 Manual override cleared!" : "❌ Failed to clear.");
+    });
+  </script>
+</body>
+</html>
